@@ -1,31 +1,32 @@
-const form = document.getElementById("loginForm")
+const loginForm = document.getElementById("loginForm")
 const msg = document.getElementById("msg")
 
-form.addEventListener("submit", async (e) => {
+loginForm.addEventListener("submit", async (e) => {
   e.preventDefault()
   msg.textContent = ""
 
-  const payload = {
-    username: document.getElementById("username").value.trim(),
-    password: document.getElementById("password").value,
+  const username = document.getElementById("username").value.trim()
+  const password = document.getElementById("password").value.trim()
+
+  if (!username || !password) {
+    msg.textContent = "Please enter username and password"
+    return
   }
 
   try {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ username, password }),
     })
-    const data = await res.json()
 
+    const data = await res.json()
     if (!data.ok) {
-      msg.textContent = data.message
+      msg.textContent = data.message || "Login failed"
       return
     }
 
-    // localStorage
     localStorage.setItem("user", JSON.stringify(data.user))
-
     window.location.href = "/view/rooms.html"
   } catch (err) {
     msg.textContent = "Network error"

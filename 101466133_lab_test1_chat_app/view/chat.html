@@ -7,24 +7,32 @@
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
-  <h1 id="title">Chat</h1>
-  <p id="who"></p>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <h1 id="title" class="page-title">Chat</h1>
+        <p id="who" class="subtle"></p>
+      </div>
+      <div class="top-actions">
+        <button id="backBtn" class="btn btn-secondary">Back to rooms</button>
+        <button id="logoutBtn" class="btn btn-danger">Logout</button>
+      </div>
+    </header>
 
-  <div style="margin: 10px 0;">
-    <button id="backBtn">Back to rooms</button>
-    <button id="logoutBtn">Logout</button>
+    <div class="chat-wrap">
+      <div class="chat-panel">
+        <div id="messages" class="chat-messages"></div>
+        <div id="typingIndicator" class="typing"></div>
+
+        <form id="sendForm" class="chat-form">
+          <input id="messageInput" class="input" placeholder="Type a message..." autocomplete="off" />
+          <button type="submit" class="btn btn-primary">Send</button>
+        </form>
+      </div>
+
+      <p id="msg" class="error"></p>
+    </div>
   </div>
-
-  <div id="messages" style="border:1px solid #ddd; padding:10px; height:360px; overflow:auto;"></div>
-
-  <div id="typingIndicator" style="margin-top:6px; font-style: italic; color: gray; min-height: 18px;"></div>
-
-  <form id="sendForm" style="margin-top:10px;">
-    <input id="messageInput" placeholder="Type a message..." style="width:70%;" autocomplete="off" />
-    <button type="submit">Send</button>
-  </form>
-
-  <p id="msg" style="color: red;"></p>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/chat.js"></script>

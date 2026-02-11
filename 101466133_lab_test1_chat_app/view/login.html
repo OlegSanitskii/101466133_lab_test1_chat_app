@@ -7,20 +7,31 @@
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
-  <h1>Login</h1>
+  <div class="center">
+    <div class="auth-shell">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Chat App</h1>
+          <p>Login to continue</p>
+        </div>
+      </div>
 
-  <form id="loginForm">
-    <input id="username" placeholder="Username" required />
-    <input id="password" type="password" placeholder="Password" required />
-    <button type="submit">Login</button>
-  </form>
+      <section class="card pad">
+        <form id="loginForm" class="form">
+          <input id="username" class="input" placeholder="Username" autocomplete="username" />
+          <input id="password" class="input" placeholder="Password" type="password" autocomplete="current-password" />
+          <button class="btn btn-primary" type="submit">Login</button>
+        </form>
 
-  <p id="msg"></p>
+        <p id="msg" class="error" style="margin-top: 10px;"></p>
 
-  <p>
-    No account?
-    <a href="/view/signup.html">Signup</a>
-  </p>
+        <div class="footer-link">
+          No account? <a href="/view/signup.html">Create one</a>
+        </div>
+      </section>
+    </div>
+  </div>
 
   <script src="/js/login.js"></script>
 </body>

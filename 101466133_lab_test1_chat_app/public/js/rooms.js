@@ -1,13 +1,9 @@
-const welcome = document.getElementById("welcome")
+const who = document.getElementById("who")
+const roomsList = document.getElementById("roomsList")
+const privateForm = document.getElementById("privateForm")
+const privateToInput = document.getElementById("privateTo")
 const msg = document.getElementById("msg")
 const logoutBtn = document.getElementById("logoutBtn")
-
-const joinBtn = document.getElementById("joinBtn")
-const roomInput = document.getElementById("roomInput")
-
-const privateTo = document.getElementById("privateTo")
-const privateGoBtn = document.getElementById("privateGoBtn")
-const privateMsg = document.getElementById("privateMsg")
 
 function getUser() {
   const raw = localStorage.getItem("user")
@@ -15,45 +11,59 @@ function getUser() {
 }
 
 const user = getUser()
-if (!user) {
-  window.location.href = "/view/login.html"
-} else {
-  welcome.textContent = `Welcome, ${user.firstname} ${user.lastname} (@${user.username})`
-}
+if (!user) window.location.href = "/view/login.html"
 
-function goToRoom(roomName) {
-  const clean = (roomName || "").trim()
-  if (!clean) {
-    msg.textContent = "Room name is required"
-    return
-  }
-  localStorage.setItem("chatMode", "group")
-  localStorage.setItem("roomName", clean)
-  localStorage.removeItem("privateTo")
-  window.location.href = "/view/chat.html"
-}
+who.textContent = `You: ${user.firstname} ${user.lastname} (@${user.username})`
 
-joinBtn.addEventListener("click", () => {
-  msg.textContent = ""
-  goToRoom(roomInput.value)
-})
+const rooms = ["General", "Sports", "Music", "Movies", "Tech"]
 
-document.querySelectorAll(".roomBtn").forEach((btn) => {
+function makeRoomItem(room) {
+  const item = document.createElement("div")
+  item.className = "list-item"
+
+  const meta = document.createElement("div")
+  meta.className = "meta"
+
+  const title = document.createElement("div")
+  title.className = "title"
+  title.textContent = room
+
+  const desc = document.createElement("div")
+  desc.className = "desc"
+  desc.textContent = "Group chat room"
+
+  meta.appendChild(title)
+  meta.appendChild(desc)
+
+  const btn = document.createElement("button")
+  btn.className = "btn btn-primary"
+  btn.textContent = "Join"
   btn.addEventListener("click", () => {
-    msg.textContent = ""
-    goToRoom(btn.dataset.room)
+    localStorage.setItem("chatMode", "group")
+    localStorage.setItem("roomName", room)
+    localStorage.removeItem("privateTo")
+    window.location.href = "/view/chat.html"
   })
-})
 
-privateGoBtn.addEventListener("click", () => {
-  privateMsg.textContent = ""
-  const to = (privateTo.value || "").trim()
+  item.appendChild(meta)
+  item.appendChild(btn)
+  return item
+}
+
+roomsList.innerHTML = ""
+rooms.forEach((r) => roomsList.appendChild(makeRoomItem(r)))
+
+privateForm.addEventListener("submit", (e) => {
+  e.preventDefault()
+  msg.textContent = ""
+
+  const to = (privateToInput.value || "").trim()
   if (!to) {
-    privateMsg.textContent = "Username is required"
+    msg.textContent = "Please enter a username"
     return
   }
   if (to === user.username) {
-    privateMsg.textContent = "You cannot chat with yourself"
+    msg.textContent = "You cannot start a private chat with yourself"
     return
   }
 
@@ -66,7 +76,7 @@ privateGoBtn.addEventListener("click", () => {
 logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("user")
   localStorage.removeItem("roomName")
-  localStorage.removeItem("privateTo")
   localStorage.removeItem("chatMode")
+  localStorage.removeItem("privateTo")
   window.location.href = "/view/login.html"
 })

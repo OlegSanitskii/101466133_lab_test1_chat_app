@@ -7,43 +7,45 @@
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <h1 class="page-title">Rooms</h1>
+        <p id="who" class="subtle"></p>
+      </div>
+      <div class="top-actions">
+        <span class="pill"><span class="dot"></span> Online</span>
+        <button id="logoutBtn" class="btn btn-danger">Logout</button>
+      </div>
+    </header>
 
-  <h1>Rooms</h1>
-  <p id="welcome"></p>
+    <div class="grid-2" style="margin-top: 14px;">
+      <section class="card pad">
+        <h2 class="section-title">Group rooms</h2>
 
-  <hr />
+        <div id="roomsList" class="list"></div>
 
-  <!-- Join custom room -->
-  <div style="margin: 12px 0;">
-    <input id="roomInput" placeholder="Room name (e.g. General)" />
-    <button id="joinBtn">Join</button>
+        <div style="margin-top: 14px;">
+          <p class="help">Tip: Join a room to start a group chat.</p>
+        </div>
+      </section>
+
+      <section class="card pad">
+        <h2 class="section-title">Private chat</h2>
+
+        <form id="privateForm" class="form">
+          <input id="privateTo" class="input" placeholder="Enter username (e.g. alex1)" />
+          <button class="btn btn-primary" type="submit">Start private chat</button>
+        </form>
+
+        <p class="help" style="margin-top: 10px;">
+          You can start a private chat by entering a username.
+        </p>
+
+        <p id="msg" class="error" style="margin-top: 10px;"></p>
+      </section>
+    </div>
   </div>
-
-  <!-- Quick rooms -->
-  <h3>Quick rooms</h3>
-  <div>
-    <button class="roomBtn" data-room="General">General</button>
-    <button class="roomBtn" data-room="Sports">Sports</button>
-    <button class="roomBtn" data-room="Movies">Movies</button>
-  </div>
-
-  <hr />
-
-  <!-- Private chat -->
-  <h3>Private chat</h3>
-  <div style="margin: 12px 0;">
-    <input id="privateTo" placeholder="Enter username (e.g. alex1)" />
-    <button id="privateGoBtn">Start private chat</button>
-  </div>
-  <p id="privateMsg" style="color:red;"></p>
-
-  <hr />
-
-  <div style="margin-top: 16px;">
-    <button id="logoutBtn">Logout</button>
-  </div>
-
-  <p id="msg" style="color: red;"></p>
 
   <script src="/js/rooms.js"></script>
 </body>

@@ -8,8 +8,6 @@ const backBtn = document.getElementById("backBtn")
 const logoutBtn = document.getElementById("logoutBtn")
 const typingIndicator = document.getElementById("typingIndicator")
 
-console.log("chat.js loaded v3")
-
 function getUser() {
   const raw = localStorage.getItem("user")
   return raw ? JSON.parse(raw) : null
@@ -39,24 +37,81 @@ function clearMessages() {
   messagesDiv.innerHTML = ""
 }
 
-function addLine(text) {
-  const line = document.createElement("div")
-  line.textContent = text
-  messagesDiv.appendChild(line)
+function scrollToBottom() {
   messagesDiv.scrollTop = messagesDiv.scrollHeight
 }
 
+// HH:MM from ISO date
+function formatTime(iso) {
+  if (!iso) return ""
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ""
+  const hh = String(d.getHours()).padStart(2, "0")
+  const mm = String(d.getMinutes()).padStart(2, "0")
+  return `${hh}:${mm}`
+}
+
+function makeMessageEl({ isMe, authorText, text, timeText }) {
+  const wrapper = document.createElement("div")
+  wrapper.className = `msg ${isMe ? "me" : "other"}`
+
+  // author (only for others)
+  if (authorText) {
+    const author = document.createElement("div")
+    author.className = "author"
+    author.textContent = authorText
+    wrapper.appendChild(author)
+  }
+
+  // bubble
+  const bubble = document.createElement("div")
+  bubble.className = "bubble"
+
+  const bubbleText = document.createElement("span")
+  bubbleText.className = "bubble-text"
+  bubbleText.textContent = text
+
+  const time = document.createElement("div")
+  time.className = "time"
+  time.textContent = timeText || ""
+
+  bubble.appendChild(bubbleText)
+  bubble.appendChild(time)
+
+  wrapper.appendChild(bubble)
+  return wrapper
+}
+
 function renderGroupMessage(m) {
-  const name = `${m.firstname} ${m.lastname} (@${m.username})`
-  addLine(`${name}: ${m.message}`)
+  const isMe = m.username === user.username
+  const authorText = isMe ? "" : `${m.firstname} ${m.lastname} (@${m.username})`
+  const timeText = formatTime(m.createdAt)
+
+  const el = makeMessageEl({
+    isMe,
+    authorText,
+    text: m.message,
+    timeText,
+  })
+
+  messagesDiv.appendChild(el)
+  scrollToBottom()
 }
 
 function renderPrivateMessage(m) {
-  const sender =
-    m.from === user.username
-      ? `${user.firstname} ${user.lastname} (@${user.username})`
-      : `@${m.from}`
-  addLine(`${sender}: ${m.message}`)
+  const isMe = m.from === user.username
+  const authorText = isMe ? "" : `@${m.from}`
+  const timeText = formatTime(m.createdAt)
+
+  const el = makeMessageEl({
+    isMe,
+    authorText,
+    text: m.message,
+    timeText,
+  })
+
+  messagesDiv.appendChild(el)
+  scrollToBottom()
 }
 
 async function loadHistory() {
@@ -135,7 +190,6 @@ function touchTyping(label, ttlMs = 2000) {
   renderTyping()
 }
 
-// stopTyping
 function clearTyping(label) {
   const id = typingTimers.get(label)
   if (id) clearTimeout(id)
@@ -150,7 +204,6 @@ function clearTyping(label) {
 const socket = io()
 
 socket.on("connect", () => {
-  // IMPORTANT: register current user so private messages reach this browser
   socket.emit("registerUser", user.username)
 
   if (chatMode === "group") {
@@ -197,7 +250,7 @@ socket.on("newPrivateMessage", (m) => {
 socket.on("userTypingRoom", ({ username }) => {
   if (chatMode !== "group") return
   if (!username) return
-  touchTyping(username, 8000)
+  touchTyping(username, 2000)
 })
 
 socket.on("userStopTypingRoom", ({ username }) => {
@@ -212,7 +265,7 @@ socket.on("userTypingPrivate", ({ from }) => {
   if (!from) return
   if (from !== privateTo) return
 
-  touchTyping(`@${from}`, 8000)
+  touchTyping(`@${from}`, 2000)
 })
 
 socket.on("userStopTypingPrivate", ({ from }) => {
@@ -249,7 +302,6 @@ function emitTypingStop() {
 messageInput.addEventListener("input", () => {
   const currentText = (messageInput.value || "").trim()
 
-  // If input became empty -> stop typing immediately
   if (!currentText) {
     if (typingTimeoutId) clearTimeout(typingTimeoutId)
     typingTimeoutId = null
@@ -261,13 +313,11 @@ messageInput.addEventListener("input", () => {
     return
   }
 
-  // first keypress after idle
   if (!isTyping) {
     isTyping = true
     emitTypingStart()
   }
 
-  // debounce stop
   if (typingTimeoutId) clearTimeout(typingTimeoutId)
   typingTimeoutId = setTimeout(() => {
     if (!isTyping) return
@@ -287,7 +337,6 @@ sendForm.addEventListener("submit", (e) => {
   const text = (messageInput.value || "").trim()
   if (!text) return
 
-  // stop typing when message is sent
   if (typingTimeoutId) clearTimeout(typingTimeoutId)
   typingTimeoutId = null
   if (isTyping) {
@@ -313,10 +362,6 @@ sendForm.addEventListener("submit", (e) => {
 
   messageInput.value = ""
 })
-
-// =========================
-// NAV BUTTONS
-// =========================
 
 backBtn.addEventListener("click", () => {
   window.location.href = "/view/rooms.html"
