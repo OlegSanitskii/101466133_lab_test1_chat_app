@@ -17,8 +17,10 @@
 
   <div id="messages" style="border:1px solid #ddd; padding:10px; height:360px; overflow:auto;"></div>
 
+  <div id="typingIndicator" style="margin-top:6px; font-style: italic; color: gray; min-height: 18px;"></div>
+
   <form id="sendForm" style="margin-top:10px;">
-    <input id="messageInput" placeholder="Type a message..." style="width:70%;" />
+    <input id="messageInput" placeholder="Type a message..." style="width:70%;" autocomplete="off" />
     <button type="submit">Send</button>
   </form>
 

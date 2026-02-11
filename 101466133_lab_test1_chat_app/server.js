@@ -20,7 +20,7 @@ const io = new Server(server, {
   cors: { origin: "*" },
 })
 
-// middleware (ВАЖНО: ДО routes)
+// middleware
 app.use(cors())
 app.use(express.json())
 app.use(express.static(path.join(__dirname, "public")))
@@ -43,14 +43,15 @@ app.get("/", (req, res) => {
 
 // sockets
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id)
+  console.log("✅ User connected:", socket.id)
 
   // ===== GROUP =====
   socket.on("joinRoom", (roomName) => {
     const clean = (roomName || "").trim()
     if (!clean) return
+
     socket.join(clean)
-    console.log(`Socket ${socket.id} joined room: ${clean}`)
+    console.log(`👥 Socket ${socket.id} joined room: ${clean}`)
   })
 
   socket.on("sendGroupMessage", async (data) => {
@@ -68,7 +69,7 @@ io.on("connection", (socket) => {
 
       io.to(roomName).emit("newGroupMessage", newMessage)
     } catch (err) {
-      console.log(err)
+      console.log("❌ sendGroupMessage error:", err)
     }
   })
 
@@ -76,8 +77,9 @@ io.on("connection", (socket) => {
   socket.on("registerUser", (username) => {
     const clean = (username || "").trim()
     if (!clean) return
+
     socket.join(`user:${clean}`)
-    console.log(`Socket ${socket.id} registered as user:${clean}`)
+    console.log(`🔐 Socket ${socket.id} registered as user:${clean}`)
   })
 
   socket.on("sendPrivateMessage", async (data) => {
@@ -90,12 +92,60 @@ io.on("connection", (socket) => {
       io.to(`user:${from}`).emit("newPrivateMessage", newMsg)
       io.to(`user:${to}`).emit("newPrivateMessage", newMsg)
     } catch (err) {
-      console.log(err)
+      console.log("❌ sendPrivateMessage error:", err)
     }
   })
 
+  // ===== TYPING INDICATOR (GROUP + PRIVATE) =====
+
+  // GROUP typing: notify everyone else in the room
+  socket.on("typingRoom", ({ roomName, username } = {}) => {
+    const cleanRoom = (roomName || "").trim()
+    const cleanUser = (username || "").trim()
+    if (!cleanRoom || !cleanUser) return
+
+    // debug
+    console.log(`⌨️ [GROUP typing] room=${cleanRoom} user=${cleanUser}`)
+
+    socket.to(cleanRoom).emit("userTypingRoom", { username: cleanUser })
+  })
+
+  socket.on("stopTypingRoom", ({ roomName, username } = {}) => {
+    const cleanRoom = (roomName || "").trim()
+    const cleanUser = (username || "").trim()
+    if (!cleanRoom || !cleanUser) return
+
+    // debug
+    console.log(`🛑 [GROUP stopTyping] room=${cleanRoom} user=${cleanUser}`)
+
+    socket.to(cleanRoom).emit("userStopTypingRoom", { username: cleanUser })
+  })
+
+  // PRIVATE typing: notify only the target user (to)
+  socket.on("typingPrivate", ({ from, to } = {}) => {
+    const cleanFrom = (from || "").trim()
+    const cleanTo = (to || "").trim()
+    if (!cleanFrom || !cleanTo) return
+
+    // debug
+    console.log(`⌨️ [PRIVATE typing] from=${cleanFrom} to=${cleanTo} -> room=user:${cleanTo}`)
+
+    io.to(`user:${cleanTo}`).emit("userTypingPrivate", { from: cleanFrom })
+  })
+
+  socket.on("stopTypingPrivate", ({ from, to } = {}) => {
+    const cleanFrom = (from || "").trim()
+    const cleanTo = (to || "").trim()
+    if (!cleanFrom || !cleanTo) return
+
+    // debug
+    console.log(`🛑 [PRIVATE stopTyping] from=${cleanFrom} to=${cleanTo} -> room=user:${cleanTo}`)
+
+    io.to(`user:${cleanTo}`).emit("userStopTypingPrivate", { from: cleanFrom })
+  })
+
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id)
+    console.log("👋 User disconnected:", socket.id)
   })
 })
 

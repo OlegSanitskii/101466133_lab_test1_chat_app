@@ -6,6 +6,9 @@ const messageInput = document.getElementById("messageInput")
 const msg = document.getElementById("msg")
 const backBtn = document.getElementById("backBtn")
 const logoutBtn = document.getElementById("logoutBtn")
+const typingIndicator = document.getElementById("typingIndicator")
+
+console.log("chat.js loaded v3")
 
 function getUser() {
   const raw = localStorage.getItem("user")
@@ -91,7 +94,59 @@ async function loadHistory() {
   }
 }
 
-// Socket init
+// =========================
+// TYPING INDICATOR (NO FLICKER)
+// =========================
+
+// label -> timeoutId
+const typingTimers = new Map()
+
+function setTypingText(text) {
+  if (!typingIndicator) return
+  typingIndicator.textContent = text || ""
+}
+
+function renderTyping() {
+  const arr = Array.from(typingTimers.keys())
+
+  if (arr.length === 0) {
+    setTypingText("")
+    return
+  }
+
+  if (arr.length === 1) {
+    setTypingText(`${arr[0]} is typing...`)
+    return
+  }
+
+  setTypingText(`${arr.join(", ")} are typing...`)
+}
+
+function touchTyping(label, ttlMs = 2000) {
+  const old = typingTimers.get(label)
+  if (old) clearTimeout(old)
+
+  const id = setTimeout(() => {
+    typingTimers.delete(label)
+    renderTyping()
+  }, ttlMs)
+
+  typingTimers.set(label, id)
+  renderTyping()
+}
+
+// stopTyping
+function clearTyping(label) {
+  const id = typingTimers.get(label)
+  if (id) clearTimeout(id)
+  typingTimers.delete(label)
+  renderTyping()
+}
+
+// =========================
+// SOCKET INIT
+// =========================
+
 const socket = io()
 
 socket.on("connect", () => {
@@ -108,14 +163,20 @@ socket.on("connect_error", (err) => {
   console.log("socket connect_error:", err)
 })
 
-// GROUP incoming
+// =========================
+// INCOMING: GROUP CHAT
+// =========================
+
 socket.on("newGroupMessage", (m) => {
   if (chatMode !== "group") return
   if (m.roomName !== roomName) return
   renderGroupMessage(m)
 })
 
-// PRIVATE incoming
+// =========================
+// INCOMING: PRIVATE CHAT
+// =========================
+
 socket.on("newPrivateMessage", (m) => {
   if (chatMode !== "private") return
 
@@ -128,13 +189,111 @@ socket.on("newPrivateMessage", (m) => {
   renderPrivateMessage(m)
 })
 
-// SEND
+// =========================
+// INCOMING: TYPING EVENTS
+// =========================
+
+// GROUP typing
+socket.on("userTypingRoom", ({ username }) => {
+  if (chatMode !== "group") return
+  if (!username) return
+  touchTyping(username, 8000)
+})
+
+socket.on("userStopTypingRoom", ({ username }) => {
+  if (chatMode !== "group") return
+  if (!username) return
+  clearTyping(username)
+})
+
+// PRIVATE typing
+socket.on("userTypingPrivate", ({ from }) => {
+  if (chatMode !== "private") return
+  if (!from) return
+  if (from !== privateTo) return
+
+  touchTyping(`@${from}`, 8000)
+})
+
+socket.on("userStopTypingPrivate", ({ from }) => {
+  if (chatMode !== "private") return
+  if (!from) return
+  if (from !== privateTo) return
+
+  clearTyping(`@${from}`)
+})
+
+// =========================
+// OUTGOING: TYPING (debounce)
+// =========================
+
+let isTyping = false
+let typingTimeoutId = null
+
+function emitTypingStart() {
+  if (chatMode === "group") {
+    socket.emit("typingRoom", { roomName, username: user.username })
+  } else {
+    socket.emit("typingPrivate", { from: user.username, to: privateTo })
+  }
+}
+
+function emitTypingStop() {
+  if (chatMode === "group") {
+    socket.emit("stopTypingRoom", { roomName, username: user.username })
+  } else {
+    socket.emit("stopTypingPrivate", { from: user.username, to: privateTo })
+  }
+}
+
+messageInput.addEventListener("input", () => {
+  const currentText = (messageInput.value || "").trim()
+
+  // If input became empty -> stop typing immediately
+  if (!currentText) {
+    if (typingTimeoutId) clearTimeout(typingTimeoutId)
+    typingTimeoutId = null
+
+    if (isTyping) {
+      isTyping = false
+      emitTypingStop()
+    }
+    return
+  }
+
+  // first keypress after idle
+  if (!isTyping) {
+    isTyping = true
+    emitTypingStart()
+  }
+
+  // debounce stop
+  if (typingTimeoutId) clearTimeout(typingTimeoutId)
+  typingTimeoutId = setTimeout(() => {
+    if (!isTyping) return
+    isTyping = false
+    emitTypingStop()
+  }, 900)
+})
+
+// =========================
+// SEND MESSAGE
+// =========================
+
 sendForm.addEventListener("submit", (e) => {
   e.preventDefault()
   msg.textContent = ""
 
   const text = (messageInput.value || "").trim()
   if (!text) return
+
+  // stop typing when message is sent
+  if (typingTimeoutId) clearTimeout(typingTimeoutId)
+  typingTimeoutId = null
+  if (isTyping) {
+    isTyping = false
+    emitTypingStop()
+  }
 
   if (chatMode === "group") {
     socket.emit("sendGroupMessage", {
@@ -154,6 +313,10 @@ sendForm.addEventListener("submit", (e) => {
 
   messageInput.value = ""
 })
+
+// =========================
+// NAV BUTTONS
+// =========================
 
 backBtn.addEventListener("click", () => {
   window.location.href = "/view/rooms.html"
