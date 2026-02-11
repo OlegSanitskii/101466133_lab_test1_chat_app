@@ -7,14 +7,19 @@
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
+
   <h1>Rooms</h1>
   <p id="welcome"></p>
 
+  <hr />
+
+  <!-- Join custom room -->
   <div style="margin: 12px 0;">
     <input id="roomInput" placeholder="Room name (e.g. General)" />
     <button id="joinBtn">Join</button>
   </div>
 
+  <!-- Quick rooms -->
   <h3>Quick rooms</h3>
   <div>
     <button class="roomBtn" data-room="General">General</button>
@@ -22,11 +27,23 @@
     <button class="roomBtn" data-room="Movies">Movies</button>
   </div>
 
+  <hr />
+
+  <!-- Private chat -->
+  <h3>Private chat</h3>
+  <div style="margin: 12px 0;">
+    <input id="privateTo" placeholder="Enter username (e.g. alex1)" />
+    <button id="privateGoBtn">Start private chat</button>
+  </div>
+  <p id="privateMsg" style="color:red;"></p>
+
+  <hr />
+
   <div style="margin-top: 16px;">
     <button id="logoutBtn">Logout</button>
   </div>
 
-  <p id="msg"></p>
+  <p id="msg" style="color: red;"></p>
 
   <script src="/js/rooms.js"></script>
 </body>

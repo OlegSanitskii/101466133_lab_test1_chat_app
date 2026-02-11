@@ -8,13 +8,19 @@ const path = require("path")
 
 const authRoutes = require("./routes/auth.routes")
 const messageRoutes = require("./routes/messages.routes")
+
 const GroupMessage = require("./models/GroupMessage")
+const PrivateMessage = require("./models/PrivateMessage")
 
 const app = express()
 const server = http.createServer(app)
-const io = new Server(server, { cors: { origin: "*" } })
 
-// middleware
+// socket.io + CORS
+const io = new Server(server, {
+  cors: { origin: "*" },
+})
+
+// middleware (ВАЖНО: ДО routes)
 app.use(cors())
 app.use(express.json())
 app.use(express.static(path.join(__dirname, "public")))
@@ -39,18 +45,18 @@ app.get("/", (req, res) => {
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id)
 
+  // ===== GROUP =====
   socket.on("joinRoom", (roomName) => {
-    socket.join(roomName)
-    console.log(`Socket ${socket.id} joined room: ${roomName}`)
+    const clean = (roomName || "").trim()
+    if (!clean) return
+    socket.join(clean)
+    console.log(`Socket ${socket.id} joined room: ${clean}`)
   })
 
   socket.on("sendGroupMessage", async (data) => {
     try {
-      const { roomName, username, firstname, lastname, message } = data
-
-      if (!roomName || !username || !firstname || !lastname || !message) {
-        return
-      }
+      const { roomName, username, firstname, lastname, message } = data || {}
+      if (!roomName || !username || !firstname || !lastname || !message) return
 
       const newMessage = await GroupMessage.create({
         roomName,
@@ -66,11 +72,32 @@ io.on("connection", (socket) => {
     }
   })
 
+  // ===== PRIVATE =====
+  socket.on("registerUser", (username) => {
+    const clean = (username || "").trim()
+    if (!clean) return
+    socket.join(`user:${clean}`)
+    console.log(`Socket ${socket.id} registered as user:${clean}`)
+  })
+
+  socket.on("sendPrivateMessage", async (data) => {
+    try {
+      const { from, to, message } = data || {}
+      if (!from || !to || !message) return
+
+      const newMsg = await PrivateMessage.create({ from, to, message })
+
+      io.to(`user:${from}`).emit("newPrivateMessage", newMsg)
+      io.to(`user:${to}`).emit("newPrivateMessage", newMsg)
+    } catch (err) {
+      console.log(err)
+    }
+  })
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id)
   })
 })
-
 
 const PORT = process.env.PORT || 5000
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`))
