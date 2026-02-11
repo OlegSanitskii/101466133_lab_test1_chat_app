@@ -10,9 +10,23 @@
   <h1>Rooms</h1>
   <p id="welcome"></p>
 
-  <p>Rooms page placeholder ✅</p>
+  <div style="margin: 12px 0;">
+    <input id="roomInput" placeholder="Room name (e.g. General)" />
+    <button id="joinBtn">Join</button>
+  </div>
 
-  <button id="logoutBtn">Logout</button>
+  <h3>Quick rooms</h3>
+  <div>
+    <button class="roomBtn" data-room="General">General</button>
+    <button class="roomBtn" data-room="Sports">Sports</button>
+    <button class="roomBtn" data-room="Movies">Movies</button>
+  </div>
+
+  <div style="margin-top: 16px;">
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <p id="msg"></p>
 
   <script src="/js/rooms.js"></script>
 </body>

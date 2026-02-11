@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <h1 id="title">Chat</h1>
+  <p id="who"></p>
+
+  <div style="margin: 10px 0;">
+    <button id="backBtn">Back to rooms</button>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <div id="messages" style="border:1px solid #ddd; padding:10px; height:360px; overflow:auto;"></div>
+
+  <form id="sendForm" style="margin-top:10px;">
+    <input id="messageInput" placeholder="Type a message..." style="width:70%;" />
+    <button type="submit">Send</button>
+  </form>
+
+  <p id="msg"></p>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/chat.js"></script>
+</body>
+</html>
